@@ -689,8 +689,9 @@
           </div>
           <div class="final-amount" id="final-amount"></div>
           <div class="btn-row">
-            <button class="btn" onclick="closeModal()">ยกเลิก</button>
-            <button class="btn primary" id="btn-next" onclick="goToPayment()" disabled>ดำเนินการต่อ →</button>
+            <button class="btn" onclick="closeModal()">ปิด</button>
+            <button class="btn" id="btn-save" onclick="saveChoiceAndClose()" disabled>บันทึกไว้ก่อน</button>
+            <button class="btn primary" id="btn-next" onclick="goToPayment()" disabled>ไปหน้าจ่ายเงิน →</button>
           </div>
         </div>
 
@@ -708,6 +709,25 @@
               <p style="font-size:11px;">QR PromptPay — อัปเดตโดยแอดมิน</p>
             </div>
 
+            <div class="partial-box" style="margin-bottom: 0.5rem;">
+              <div class="partial-title" style="margin-bottom: 8px;">เลือกว่าจะจ่ายค่าไหน</div>
+              <div class="trip-choice" style="grid-template-columns: 1fr; gap: 8px; margin-bottom: 0;">
+                <div class="choice-btn" id="paytype-room" onclick="selectPayType('room')" style="text-align:left; padding: 12px 12px;">
+                  <div class="choice-label">จ่ายค่าห้องก่อน</div>
+                  <div class="choice-sub" id="paytype-room-sub">คงเหลือ 0 บาท</div>
+                </div>
+                <div class="choice-btn" id="paytype-trip" onclick="selectPayType('trip')" style="text-align:left; padding: 12px 12px;">
+                  <div class="choice-label">จ่ายค่าเที่ยวก่อน</div>
+                  <div class="choice-sub" id="paytype-trip-sub">คงเหลือ 0 บาท</div>
+                </div>
+                <div class="choice-btn" id="paytype-both" onclick="selectPayType('both')" style="text-align:left; padding: 12px 12px;">
+                  <div class="choice-label">จ่ายรวม (ค่าห้อง + ค่าเที่ยว)</div>
+                  <div class="choice-sub" id="paytype-both-sub">คงเหลือ 0 บาท</div>
+                </div>
+              </div>
+              <div class="partial-summary" id="due-summary" style="margin-top: 8px;"></div>
+            </div>
+
 
             <label class="upload-area" for="slip-input" id="upload-label">
               <div class="up-icon">📎</div>
@@ -722,14 +742,7 @@
             </div>
           </div>
 
-          <div class="aux-actions" style="display:none;" id="aux-actions">
-            <button class="btn pill" id="btn-paid-trip" onclick="openPaidTripModal()">
-              จ่ายค่าเที่ยวแยกแล้ว
-            </button>
-            <button class="btn pill alt" id="btn-pay-later" onclick="openPayLaterModal()">
-              ไปเที่ยวแต่จ่ายทีหลัง
-            </button>
-          </div>
+          <div class="aux-actions" style="display:none;" id="aux-actions"></div>
 
           <div class="upload-preview" id="upload-preview">
             <span style="font-size:16px;">🖼️</span>
@@ -739,53 +752,6 @@
           <div class="btn-row">
             <button class="btn" onclick="backToChoose()">← กลับ</button>
             <button class="btn primary" id="btn-submit" onclick="submitPayment()" disabled>ส่งสลิป →</button>
-          </div>
-        </div>
-
-        <!-- Pay Later Modal -->
-        <div class="paylater-overlay" id="paylater-overlay" onclick="closePayLaterOutside(event)">
-          <div class="paylater-modal">
-            <div class="paylater-title">ไปเที่ยวแต่จ่ายทีหลัง</div>
-            <div class="paylater-note">แนบ “รูปตลกๆของตัวเอง 1 รูป” เพื่อเป็นหลักฐาน แล้วรอแอดมินยืนยัน</div>
-            <div class="paylater-emoji">😄</div>
-            <label class="upload-area small" for="fun-input" id="fun-label">
-              <div class="up-label">แนบรูปตลกๆ</div>
-              <div class="up-sub">กดเพื่อเลือกภาพจากอัลบั้ม</div>
-              <input type="file" id="fun-input" accept="image/*" onchange="handleFunPhoto(this)">
-            </label>
-            <div class="upload-preview" id="fun-preview">
-              <span style="font-size:16px;">🖼️</span>
-              <span class="file-name" id="fun-file-name"></span>
-            </div>
-            <div class="btn-row">
-              <button class="btn" onclick="closePayLaterModal()">ยกเลิก</button>
-              <button class="btn primary" onclick="submitPayLater()">ส่งให้แอดมิน →</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Paid Trip Modal -->
-        <div class="paylater-overlay" id="paidtrip-overlay" onclick="closePaidTripOutside(event)">
-          <div class="paylater-modal" style="background:#F3FBF8; border-color:#CDECE1;">
-            <div class="paylater-title" style="color:#0E5B49;">จ่ายค่าเที่ยวแยกแล้ว</div>
-            <div class="paylater-note" style="color:#0E5B49;">เลือกติ๊กแล้วใส่ยอดที่จ่ายแล้ว เพื่อคำนวณยอดคงเหลือ</div>
-            <div class="partial-box" style="margin-bottom:12px;">
-              <div class="partial-head">
-                <div class="partial-title">ถ้าจ่ายค่าเที่ยวแล้ว ให้ติ๊กด้านล่าง</div>
-                <label class="partial-check">
-                  <input type="checkbox" id="paid-trip-toggle" onchange="togglePaidTrip(this)">
-                  <span>จ่ายค่าเที่ยวแล้ว (+1,200)</span>
-                </label>
-              </div>
-              <div class="partial-row">
-                <span>ยอดที่จ่ายแล้ว</span>
-                <input type="number" id="paid-amount-input" min="0" placeholder="0" oninput="handlePaidAmountInput(this)">
-              </div>
-              <div class="partial-summary" id="remaining-text"></div>
-            </div>
-            <div class="btn-row">
-              <button class="btn" onclick="closePaidTripModal()">ปิด</button>
-            </div>
           </div>
         </div>
 
@@ -852,9 +818,8 @@
   let currentFilter = 'all';
   let currentSlipFile = null;
   let currentReason = "";
-  let currentPaidAmount = 0;
-  let currentPayLater = false;
-  let currentFunFile = null;
+  let currentPayType = null; // 'room' | 'trip' | 'both'
+  let currentPayDue = 0;
 
   function isSupabaseReady() {
     return SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase;
@@ -883,11 +848,22 @@
           if (payload.eventType === 'DELETE') {
             delete state[row.member_id];
           } else {
+            const m = MEMBERS.find(x => x.id === row.member_id);
+            const base = m ? (m.base || 0) : 0;
+            const parsed = parseReasonField(row.reason || "");
+            const choice = row.choice || null;
+            const paidAmount = typeof row.paid_amount === 'number' ? row.paid_amount : (parseInt(row.paid_amount || '0', 10) || 0);
+            const roomPaid = !!parsed.roomPaid || !!row.paid || (base > 0 && paidAmount >= base);
+            const tripPaid = !!parsed.tripPaid || (!!row.paid && choice === 'go') || (choice === 'go' && paidAmount >= (base + 1200));
             state[row.member_id] = {
-              choice: row.choice,
-              paid: row.paid,
+              choice,
+              paid: !!row.paid,
               amount: row.amount,
               ts: row.updated_at || row.created_at,
+              reason: row.reason || null,
+              paid_amount: paidAmount,
+              room_paid: roomPaid,
+              trip_paid: tripPaid,
               slip_url: row.slip_url || null
             };
           }
@@ -917,15 +893,22 @@
 
     state = {};
     data.forEach(row => {
+      const m = MEMBERS.find(x => x.id === row.member_id);
+      const base = m ? (m.base || 0) : 0;
+      const parsed = parseReasonField(row.reason || "");
+      const choice = row.choice || null;
+      const paidAmount = typeof row.paid_amount === 'number' ? row.paid_amount : (parseInt(row.paid_amount || '0', 10) || 0);
+      const roomPaid = !!parsed.roomPaid || !!row.paid || (base > 0 && paidAmount >= base);
+      const tripPaid = !!parsed.tripPaid || (!!row.paid && choice === 'go') || (choice === 'go' && paidAmount >= (base + 1200));
       state[row.member_id] = {
-        choice: row.choice,
-        paid: row.paid,
+        choice,
+        paid: !!row.paid,
         amount: row.amount,
         ts: row.updated_at || row.created_at,
         reason: row.reason || null,
-        paid_amount: row.paid_amount || 0,
-        pay_later: row.pay_later || false,
-        fun_photo_url: row.fun_photo_url || null,
+        paid_amount: paidAmount,
+        room_paid: roomPaid,
+        trip_paid: tripPaid,
         slip_url: row.slip_url || null
       };
     });
@@ -947,9 +930,61 @@
     return base;
   }
 
-  function calcRemaining(total, paidAmount) {
-    const remaining = total - (paidAmount || 0);
-    return remaining < 0 ? 0 : remaining;
+  function getTripFee(choice) {
+    return choice === 'go' ? 1200 : 0;
+  }
+
+  function parseReasonField(reasonField) {
+    if (!reasonField) return { reasonText: "", roomPaid: false, tripPaid: false };
+    if (typeof reasonField !== 'string') return { reasonText: "", roomPaid: false, tripPaid: false };
+    const trimmed = reasonField.trim();
+    if (!trimmed) return { reasonText: "", roomPaid: false, tripPaid: false };
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      try {
+        const obj = JSON.parse(trimmed);
+        return {
+          reasonText: typeof obj.reason === 'string' ? obj.reason : "",
+          roomPaid: !!obj.room_paid,
+          tripPaid: !!obj.trip_paid
+        };
+      } catch (_) {
+        return { reasonText: reasonField, roomPaid: false, tripPaid: false };
+      }
+    }
+    return { reasonText: reasonField, roomPaid: false, tripPaid: false };
+  }
+
+  function buildReasonField(reasonText, roomPaid, tripPaid) {
+    const clean = (reasonText || '').trim();
+    return JSON.stringify({ reason: clean, room_paid: !!roomPaid, trip_paid: !!tripPaid });
+  }
+
+  function isRoomPaidFor(memberId) {
+    const s = state[memberId];
+    return !!(s && s.room_paid);
+  }
+
+  function isTripPaidFor(memberId) {
+    const s = state[memberId];
+    return !!(s && s.trip_paid);
+  }
+
+  function calcRoomDue(base, roomPaid) {
+    return roomPaid ? 0 : base;
+  }
+
+  function calcTripDue(choice, tripPaid) {
+    const fee = getTripFee(choice);
+    if (!fee) return 0;
+    return tripPaid ? 0 : fee;
+  }
+
+  function isSettled(memberId, memberBase) {
+    const s = state[memberId];
+    if (!s || !s.choice) return false;
+    const roomDue = calcRoomDue(memberBase, !!s.room_paid);
+    const tripDue = calcTripDue(s.choice, !!s.trip_paid);
+    return roomDue === 0 && tripDue === 0;
   }
 
   function renderList() {
@@ -960,9 +995,11 @@
     MEMBERS.forEach(m => {
       const s = state[m.id];
       if (!s) pendingCount++;
-      else if (s.paid) { paidCount++; if(s.choice==='go') goCount++; else noCount++; }
-      else if (s.choice==='go') goCount++;
-      else if (s.choice==='no') noCount++;
+      else {
+        if (s.choice === 'go') goCount++;
+        else if (s.choice === 'no') noCount++;
+        if (isSettled(m.id, m.base)) paidCount++;
+      }
     });
 
     document.getElementById('stat-go').textContent = goCount;
@@ -982,35 +1019,34 @@
       if (currentFilter === 'pending') return !s;
       if (currentFilter === 'go') return s && s.choice === 'go';
       if (currentFilter === 'no') return s && s.choice === 'no';
-      if (currentFilter === 'paid') return s && s.paid;
+      if (currentFilter === 'paid') return isSettled(m.id, m.base);
       return true;
     });
 
     list.innerHTML = filtered.map(m => {
       const s = state[m.id];
       const choice = s ? s.choice : null;
-      const paid = s ? s.paid : false;
-      const paidAmount = s ? (s.paid_amount || 0) : 0;
-      const amount = choice ? calcAmount(m.base, choice) : m.base;
-      const remaining = choice ? calcRemaining(amount, paidAmount) : amount;
-      const isSuccess = paid || remaining === 0;
-      const payLater = s ? (s.pay_later || false) : false;
+      const roomPaid = s ? !!s.room_paid : false;
+      const tripPaid = s ? !!s.trip_paid : false;
+      const roomDue = calcRoomDue(m.base, roomPaid);
+      const tripDue = choice ? calcTripDue(choice, tripPaid) : 0;
+      const settled = choice ? (roomDue === 0 && tripDue === 0) : false;
 
       const avatarClass = choice === 'go' ? 'go' : choice === 'no' ? 'no' : 'pending';
-      const amountClass = choice === 'go' ? 'amount-go' : choice === 'no' ? 'amount-no' : 'amount-pending';
-      const cardClass = isSuccess ? 'success' : paid ? 'paid' : 'unpaid';
+      const amountClass = roomDue === 0 ? 'amount-go' : 'amount-pending';
+      const cardClass = settled ? 'success' : 'unpaid';
 
       let badgeHtml = '';
-      if (payLater && !paid) badgeHtml = '<span class="badge paid">รอแอดมินยืนยัน</span>';
-      else if (isSuccess) badgeHtml = '<span class="badge success">จ่ายครบแล้ว</span>';
-      else if (paid) badgeHtml = '<span class="badge paid">จ่ายแล้ว</span>';
-      else if (paidAmount > 0) badgeHtml = '<span class="badge paid">จ่ายแล้วบางส่วน</span>';
+      if (!choice) badgeHtml = '<span class="badge pending">รอยืนยัน</span>';
+      else if (settled) badgeHtml = '<span class="badge success">เคลียร์ครบแล้ว</span>';
+      else if (choice === 'go' && roomPaid && !tripPaid) badgeHtml = '<span class="badge paid">จ่ายค่าห้องแล้ว</span>';
+      else if (choice === 'go' && !roomPaid && tripPaid) badgeHtml = '<span class="badge paid">จ่ายค่าเที่ยวแล้ว</span>';
       else if (choice === 'go') badgeHtml = '<span class="badge go">ไปเที่ยว</span>';
+      else if (choice === 'no' && roomPaid) badgeHtml = '<span class="badge success">จ่ายค่าห้องแล้ว</span>';
       else if (choice === 'no') badgeHtml = '<span class="badge no">ไม่ไป</span>';
-      else badgeHtml = '<span class="badge pending">รอยืนยัน</span>';
 
       const amountDisplay = choice
-        ? `${remaining.toLocaleString()} บาท`
+        ? `${roomDue.toLocaleString()} บาท`
         : `${m.base.toLocaleString()} บาท • เงินห้อง`;
 
       return `<div class="member-card ${cardClass}" onclick="openModal(${m.id})">
@@ -1041,9 +1077,7 @@
     currentChoice = null;
     currentSlipFile = null;
     currentReason = "";
-    currentPaidAmount = 0;
-    currentPayLater = false;
-    currentFunFile = null;
+    currentPayType = null;
     const s = state[id];
 
     document.getElementById('modal-avatar').textContent = getInitials(m.name);
@@ -1054,19 +1088,21 @@
     document.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
     document.getElementById('final-amount').classList.remove('show', 'go', 'no');
     document.getElementById('btn-next').disabled = true;
+    document.getElementById('btn-save').disabled = true;
 
-    if (s && s.paid) {
-      showDoneView(m, s.choice, calcAmount(m.base, s.choice), s.slip_url || null);
+    if (s && s.choice && isSettled(id, m.base)) {
+      showDoneView(m, s.choice, s.slip_url || null);
       setSteps(3);
     } else if (s && s.choice) {
       currentChoice = s.choice;
-      currentReason = s.reason || "";
-      currentPaidAmount = s.paid_amount || 0;
-      currentPayLater = s.pay_later || false;
+      const parsed = parseReasonField(s.reason || "");
+      currentReason = parsed.reasonText || "";
       document.querySelector('.' + s.choice + '-btn').classList.add('selected');
       updateFinalAmount();
       showView('choose');
       setSteps(1);
+      document.getElementById('btn-save').disabled = false;
+      document.getElementById('btn-next').disabled = false;
     } else {
       showView('choose');
       setSteps(1);
@@ -1118,6 +1154,7 @@
     document.querySelector('.' + c + '-btn').classList.add('selected');
     updateFinalAmount();
     document.getElementById('btn-next').disabled = false;
+    document.getElementById('btn-save').disabled = false;
 
     if (currentMember) {
       if (!state[currentMember.id]) state[currentMember.id] = {};
@@ -1135,6 +1172,48 @@
     }
   }
 
+  function saveChoiceAndClose() {
+    if (!currentMember || !currentChoice) return;
+    if (!state[currentMember.id]) state[currentMember.id] = {};
+    state[currentMember.id].choice = currentChoice;
+    // บันทึกเหตุผลไว้ด้วย (กรณีไม่ไป) โดยไม่ต้องจ่ายเงิน
+    const s = state[currentMember.id];
+    const roomPaid = !!s.room_paid;
+    const tripPaid = !!s.trip_paid;
+    s.reason = buildReasonField(currentReason || "", roomPaid, tripPaid);
+    s.updated_at = new Date().toISOString();
+    const amt = calcAmount(currentMember.base, currentChoice);
+
+    if (supabaseClient) {
+      // บันทึก "เลือกไป/ไม่ไป" ลงฐานได้เลย (ไม่ต้องแนบสลิป)
+      supabaseClient
+        .from(TABLE_NAME)
+        .upsert({
+          member_id: currentMember.id,
+          name: currentMember.name,
+          choice: currentChoice,
+          paid: (roomPaid && (currentChoice !== 'go' || tripPaid)),
+          amount: amt,
+          reason: s.reason,
+          paid_amount: (roomPaid ? currentMember.base : 0) + (tripPaid ? getTripFee(currentChoice) : 0),
+          slip_url: s.slip_url || null,
+          updated_at: s.updated_at
+        }, { onConflict: 'member_id' })
+        .then(({ error }) => {
+          if (error) console.warn('Save choice error:', error);
+        });
+    } else {
+      saveStateLocal();
+    }
+
+    // อัปเดต state ในเครื่องทันที
+    s.amount = amt;
+    s.ts = Date.now();
+    s.paid = (roomPaid && (currentChoice !== 'go' || tripPaid));
+    renderList();
+    closeModal();
+  }
+
   function updateFinalAmount() {
     if (!currentMember || !currentChoice) return;
     const amt = calcAmount(currentMember.base, currentChoice);
@@ -1150,22 +1229,20 @@
     const safeName = currentMember.name.replace(/\s+/g, '');
     const fileName = `${safeName}_${choiceLabel}_${amt}`;
     document.getElementById('file-name-preview').textContent = fileName + '.jpg';
-    document.getElementById('qr-amount-label').textContent = amt.toLocaleString() + ' บาท';
+    document.getElementById('qr-amount-label').textContent = 'สแกนเพื่อโอน (เลือกยอดตามที่จ่าย)';
     document.getElementById('btn-submit').disabled = true;
+    currentSlipFile = null;
+    const slipInput = document.getElementById('slip-input');
+    if (slipInput) slipInput.value = '';
     document.getElementById('upload-preview').classList.remove('show');
     document.getElementById('success-banner').classList.remove('show');
     document.getElementById('error-banner').classList.remove('show');
 
-    const paidToggle = document.getElementById('paid-trip-toggle');
-    const paidInput = document.getElementById('paid-amount-input');
-    if (paidToggle) paidToggle.checked = currentPaidAmount >= 1200;
-    if (paidInput) {
-      paidInput.value = currentPaidAmount || 0;
-      paidInput.disabled = !paidToggle || !paidToggle.checked;
-    }
-    updateRemainingText();
-    const aux = document.getElementById('aux-actions');
-    if (aux) aux.style.display = currentChoice === 'go' ? 'flex' : 'none';
+    // ตั้งค่าหน้าจ่ายเงินใหม่
+    currentPayType = null;
+    currentPayDue = 0;
+    updatePayTypeUI();
+    selectPayType(currentChoice === 'go' ? 'both' : 'room');
 
     showView('payment');
     setSteps(2);
@@ -1182,96 +1259,86 @@
       currentSlipFile = f;
       document.getElementById('uploaded-file-name').textContent = f.name;
       document.getElementById('upload-preview').classList.add('show');
-      document.getElementById('btn-submit').disabled = false;
+      document.getElementById('btn-submit').disabled = !(currentPayType && currentSlipFile && currentPayDue > 0);
     }
   }
 
-  function handleFunPhoto(input) {
-    if (input.files && input.files[0]) {
-      const f = input.files[0];
-      currentFunFile = f;
-      document.getElementById('fun-file-name').textContent = f.name;
-      document.getElementById('fun-preview').classList.add('show');
-    }
-  }
-
-  function openPayLaterModal() {
-    currentPayLater = true;
-    document.getElementById('paylater-overlay').classList.add('open');
-  }
-
-  function closePayLaterModal() {
-    document.getElementById('paylater-overlay').classList.remove('open');
-  }
-
-  function closePayLaterOutside(e) {
-    if (e.target === document.getElementById('paylater-overlay')) closePayLaterModal();
-  }
-
-  function submitPayLater() {
-    currentPayLater = true;
-    submitPayment();
-    closePayLaterModal();
-  }
-
-  function openPaidTripModal() {
-    document.getElementById('paidtrip-overlay').classList.add('open');
-    const paidToggle = document.getElementById('paid-trip-toggle');
-    const paidInput = document.getElementById('paid-amount-input');
-    if (paidToggle) paidToggle.checked = currentPaidAmount >= 1200;
-    if (paidInput) {
-      paidInput.value = currentPaidAmount || 0;
-      paidInput.disabled = !paidToggle || !paidToggle.checked;
-    }
-    updateRemainingText();
-  }
-
-  function closePaidTripModal() {
-    document.getElementById('paidtrip-overlay').classList.remove('open');
-  }
-
-  function closePaidTripOutside(e) {
-    if (e.target === document.getElementById('paidtrip-overlay')) closePaidTripModal();
-  }
-
-  function updateRemainingText() {
+  function updatePayTypeUI() {
     if (!currentMember || !currentChoice) return;
-    const total = calcAmount(currentMember.base, currentChoice);
-    const remaining = calcRemaining(total, currentPaidAmount);
-    const el = document.getElementById('remaining-text');
-    if (el) el.textContent = `คงเหลือที่ต้องจ่าย (เงินห้อง): ${remaining.toLocaleString()} บาท`;
+    const s = state[currentMember.id] || {};
+    const roomPaid = !!s.room_paid;
+    const tripPaid = !!s.trip_paid;
+
+    const roomDue = calcRoomDue(currentMember.base, roomPaid);
+    const tripDue = calcTripDue(currentChoice, tripPaid);
+    const bothDue = roomDue + tripDue;
+
+    const roomSub = document.getElementById('paytype-room-sub');
+    const tripSub = document.getElementById('paytype-trip-sub');
+    const bothSub = document.getElementById('paytype-both-sub');
+    if (roomSub) roomSub.textContent = roomDue === 0 ? 'เคลียร์ค่าห้องแล้ว' : `คงเหลือ ${roomDue.toLocaleString()} บาท`;
+    if (tripSub) tripSub.textContent = getTripFee(currentChoice) === 0 ? 'ไม่มีค่าเที่ยว' : (tripDue === 0 ? 'เคลียร์ค่าเที่ยวแล้ว' : `คงเหลือ ${tripDue.toLocaleString()} บาท`);
+    if (bothSub) bothSub.textContent = bothDue === 0 ? 'เคลียร์ครบแล้ว' : `คงเหลือรวม ${bothDue.toLocaleString()} บาท`;
+
+    const dueSummary = document.getElementById('due-summary');
+    if (dueSummary) {
+      const parts = [];
+      parts.push(`ค่าห้องคงเหลือ: ${roomDue.toLocaleString()} บาท`);
+      if (getTripFee(currentChoice) > 0) parts.push(`ค่าเที่ยวคงเหลือ: ${tripDue.toLocaleString()} บาท`);
+      dueSummary.textContent = parts.join(' • ');
+    }
+
+    // ซ่อนตัวเลือก "จ่ายค่าเที่ยว" ถ้าไม่ได้ไปเที่ยว
+    const tripBtn = document.getElementById('paytype-trip');
+    const bothBtn = document.getElementById('paytype-both');
+    if (currentChoice !== 'go') {
+      if (tripBtn) tripBtn.style.display = 'none';
+      if (bothBtn) bothBtn.style.display = 'none';
+    } else {
+      if (tripBtn) tripBtn.style.display = 'block';
+      if (bothBtn) bothBtn.style.display = 'block';
+    }
   }
 
-  function togglePaidTrip(el) {
-    if (el.checked) {
-      currentPaidAmount = Math.max(currentPaidAmount, 1200);
-    } else if (currentPaidAmount === 1200) {
-      currentPaidAmount = 0;
-    }
-    const paidInput = document.getElementById('paid-amount-input');
-    if (paidInput) {
-      paidInput.value = currentPaidAmount;
-      paidInput.disabled = !el.checked;
-    }
-    if (currentMember) {
-      if (!state[currentMember.id]) state[currentMember.id] = {};
-      state[currentMember.id].paid_amount = currentPaidAmount;
-      if (!supabaseClient) saveStateLocal();
-    }
-    updateRemainingText();
-  }
+  function selectPayType(t) {
+    currentPayType = t;
+    const errorBanner = document.getElementById('error-banner');
+    if (errorBanner) errorBanner.classList.remove('show');
+    ['room','trip','both'].forEach(x => {
+      const el = document.getElementById('paytype-' + x);
+      if (!el) return;
+      if (x === t) el.style.borderColor = 'var(--c-primary)';
+      else el.style.borderColor = 'var(--c-border)';
+      if (x === t) el.style.background = 'var(--c-primary-light)';
+      else el.style.background = 'var(--c-surface)';
+    });
 
-  function handlePaidAmountInput(el) {
-    const val = parseInt(el.value || '0', 10);
-    currentPaidAmount = isNaN(val) ? 0 : Math.max(0, val);
-    const paidToggle = document.getElementById('paid-trip-toggle');
-    if (paidToggle) paidToggle.checked = currentPaidAmount >= 1200;
-    if (currentMember) {
-      if (!state[currentMember.id]) state[currentMember.id] = {};
-      state[currentMember.id].paid_amount = currentPaidAmount;
-      if (!supabaseClient) saveStateLocal();
+    // อัปเดตยอดที่ควรโอนตามตัวเลือก
+    if (currentMember && currentChoice) {
+      const s = state[currentMember.id] || {};
+      const roomDue = calcRoomDue(currentMember.base, !!s.room_paid);
+      const tripDue = calcTripDue(currentChoice, !!s.trip_paid);
+      const bothDue = roomDue + tripDue;
+      currentPayDue = (t === 'room' ? roomDue : t === 'trip' ? tripDue : bothDue);
+
+      const qrLabel = document.getElementById('qr-amount-label');
+      if (qrLabel) qrLabel.textContent = `ยอดที่ควรโอน: ${currentPayDue.toLocaleString()} บาท`;
+
+      const choiceLabel = currentChoice === 'go' ? 'ไป' : 'ไม่ไป';
+      const safeName = currentMember.name.replace(/\s+/g, '');
+      const typeLabel = t === 'room' ? 'ห้อง' : t === 'trip' ? 'เที่ยว' : 'รวม';
+      document.getElementById('file-name-preview').textContent = `${safeName}_${choiceLabel}_${typeLabel}_${currentPayDue}.jpg`;
+    } else {
+      currentPayDue = 0;
     }
-    updateRemainingText();
+
+    if (currentPayDue === 0 && errorBanner) {
+      errorBanner.textContent = 'ยอดคงเหลือเป็น 0 แล้ว — ไม่ต้องส่งสลิป';
+      errorBanner.classList.add('show');
+    }
+
+    document.getElementById('btn-submit').disabled = !(currentPayType && currentSlipFile && currentPayDue > 0);
+    updatePayTypeUI();
   }
 
   function getSafeExt(file) {
@@ -1303,69 +1370,55 @@
     return data.publicUrl || null;
   }
 
-  async function uploadFunPhoto(memberId) {
-    if (!supabaseClient || !currentFunFile) return null;
-    const ext = getSafeExt(currentFunFile);
-    const filePath = `fun/${memberId}/${Date.now()}.${ext}`;
-
-    const { error: uploadError } = await supabaseClient
-      .storage
-      .from(SUPABASE_BUCKET)
-      .upload(filePath, currentFunFile, {
-        cacheControl: '3600',
-        upsert: false,
-        contentType: currentFunFile.type
-      });
-
-    if (uploadError) throw uploadError;
-
-    const { data } = supabaseClient.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
-    return data.publicUrl || null;
-  }
-
   async function submitPayment() {
     if (!currentMember || !currentChoice) return;
 
     const errorBanner = document.getElementById('error-banner');
     errorBanner.classList.remove('show');
 
-    if (!currentPayLater && !currentSlipFile) {
-      errorBanner.textContent = 'กรุณาแนบสลิปก่อนส่ง';
+    if (!currentPayType) {
+      errorBanner.textContent = 'กรุณาเลือกว่าจะจ่ายค่าไหน (ค่าห้อง/ค่าเที่ยว/รวม)';
       errorBanner.classList.add('show');
       return;
     }
-    if (currentPayLater && !currentFunFile) {
-      errorBanner.textContent = 'กรุณาแนบรูปตลกๆของตัวเอง 1 รูป';
+    if (!currentSlipFile) {
+      errorBanner.textContent = 'กรุณาแนบสลิปก่อนส่ง';
       errorBanner.classList.add('show');
       return;
     }
 
     const btn = document.getElementById('btn-submit');
     btn.disabled = true;
-    btn.textContent = currentPayLater ? 'กำลังส่งให้แอดมิน...' : 'กำลังอัปโหลด...';
+    btn.textContent = 'กำลังอัปโหลด...';
 
     const amt = calcAmount(currentMember.base, currentChoice);
-    const remaining = calcRemaining(amt, currentPaidAmount);
     let slipUrl = null;
-    let funUrl = null;
 
     try {
-      if (currentPayLater) {
-        funUrl = await uploadFunPhoto(currentMember.id);
-      } else {
-        slipUrl = await uploadSlipFile(currentMember.id, currentChoice, amt);
-      }
+      slipUrl = await uploadSlipFile(currentMember.id, currentChoice, amt);
+
+      if (!state[currentMember.id]) state[currentMember.id] = {};
+      const s = state[currentMember.id];
+      const parsed = parseReasonField(s.reason || "");
+      const prevReason = (currentReason || parsed.reasonText || "").trim();
+      const prevRoomPaid = !!s.room_paid || !!parsed.roomPaid;
+      const prevTripPaid = !!s.trip_paid || !!parsed.tripPaid;
+
+      let nextRoomPaid = prevRoomPaid;
+      let nextTripPaid = prevTripPaid;
+      if (currentPayType === 'room') nextRoomPaid = true;
+      if (currentPayType === 'trip') nextTripPaid = true;
+      if (currentPayType === 'both') { nextRoomPaid = true; nextTripPaid = (currentChoice === 'go'); }
 
       const payload = {
         member_id: currentMember.id,
         name: currentMember.name,
         choice: currentChoice,
-        paid: currentPayLater ? false : (remaining === 0),
         amount: amt,
-        reason: currentReason || null,
-        paid_amount: currentPaidAmount || 0,
-        pay_later: currentPayLater,
-        fun_photo_url: funUrl,
+        // ใช้ field reason เก็บ JSON เพื่อกันต้องแก้ schema ฝั่ง DB
+        reason: buildReasonField(prevReason, nextRoomPaid, nextTripPaid),
+        paid: (nextRoomPaid && (currentChoice !== 'go' || nextTripPaid)),
+        paid_amount: (nextRoomPaid ? currentMember.base : 0) + (nextTripPaid ? getTripFee(currentChoice) : 0),
         slip_url: slipUrl,
         updated_at: new Date().toISOString()
       };
@@ -1379,19 +1432,19 @@
 
       state[currentMember.id] = {
         choice: currentChoice,
-        paid: currentPayLater ? false : (remaining === 0),
         amount: amt,
         ts: Date.now(),
-        reason: currentReason || null,
-        paid_amount: currentPaidAmount || 0,
-        pay_later: currentPayLater,
-        fun_photo_url: funUrl,
+        paid: payload.paid,
+        reason: payload.reason,
+        paid_amount: payload.paid_amount,
+        room_paid: nextRoomPaid,
+        trip_paid: nextTripPaid,
         slip_url: slipUrl
       };
 
       if (!supabaseClient) saveStateLocal();
 
-      showDoneView(currentMember, currentChoice, amt, slipUrl);
+      showDoneView(currentMember, currentChoice, slipUrl);
       setSteps(3);
       renderList();
     } catch (err) {
@@ -1404,14 +1457,19 @@
     }
   }
 
-  function showDoneView(m, choice, amt, slipUrl) {
+  function showDoneView(m, choice, slipUrl) {
+    const amt = calcAmount(m.base, choice);
     const choiceLabel = choice === 'go' ? 'ไปเที่ยว' : 'ไม่ไป';
-    const reasonText = choice === 'no' && currentReason ? `\nเหตุผล: ${currentReason}` : '';
-    const remaining = calcRemaining(amt, currentPaidAmount);
-    const paidText = currentPaidAmount ? `\nจ่ายแล้ว: ${currentPaidAmount.toLocaleString()} บาท (คงเหลือ ${remaining.toLocaleString()} บาท)` : '';
-    const waitText = currentPayLater ? `\nสถานะ: รอแอดมินยืนยัน` : '';
+    const s = state[m.id] || {};
+    const parsed = parseReasonField(s.reason || "");
+    const reasonText = choice === 'no' && (currentReason || parsed.reasonText) ? `\nเหตุผล: ${(currentReason || parsed.reasonText).trim()}` : '';
+    const roomDue = calcRoomDue(m.base, !!s.room_paid || !!parsed.roomPaid);
+    const tripDue = calcTripDue(choice, !!s.trip_paid || !!parsed.tripPaid);
+    const dueTextParts = [];
+    dueTextParts.push(`หนี้ค่าห้องคงเหลือ: ${roomDue.toLocaleString()} บาท`);
+    if (getTripFee(choice) > 0) dueTextParts.push(`ค่าเที่ยวคงเหลือ: ${tripDue.toLocaleString()} บาท`);
     document.getElementById('done-msg').textContent =
-      `${m.name} — ${choiceLabel} — ${amt.toLocaleString()} บาท${waitText}\nไฟล์ถูกบันทึกแล้ว${paidText}${reasonText}`;
+      `${m.name} — ${choiceLabel}\n${dueTextParts.join(' • ')}\nไฟล์ถูกบันทึกแล้ว${reasonText}`;
 
     const doneSlip = document.getElementById('done-slip');
     if (slipUrl) {
@@ -1429,6 +1487,7 @@
     currentMember = null;
     currentChoice = null;
     currentSlipFile = null;
+    currentPayType = null;
   }
 
   function closeModalOutside(e) {
