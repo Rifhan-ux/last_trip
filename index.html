@@ -89,6 +89,17 @@
     .stat-card.no .value { color: var(--c-danger); }
     .stat-card.paid .value { color: #1B74E4; }
     .stat-card.host .value { color: #7C3AED; }
+    .stat-card.paid-room { background: #E8F2FF; border-color: #B9D4FF; }
+    .stat-card.paid-room .label { color: #1B4F9B; }
+    .stat-card.paid-room .value { color: #1B74E4; }
+
+    .stat-card.paid-trip { background: #F3E8FF; border-color: #D9B8FF; }
+    .stat-card.paid-trip .label { color: #5B21B6; }
+    .stat-card.paid-trip .value { color: #7C3AED; }
+
+    .stat-card.paid-settled { background: #E1F5EE; border-color: #BFE6D7; }
+    .stat-card.paid-settled .label { color: #0E5B49; }
+    .stat-card.paid-settled .value { color: var(--c-primary); }
 
     .search-bar {
       display: flex;
@@ -128,6 +139,74 @@
       transition: all 0.15s;
     }
     .filter-tab.active { background: var(--c-primary); color: white; border-color: var(--c-primary); }
+
+    .stats-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: -2px 0 0.9rem;
+      justify-content: center;
+    }
+    .stats-actions .btn.pill {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      color: var(--c-text);
+    }
+    .stats-actions .btn.pill:hover { background: var(--c-bg); }
+    .stats-actions .btn.pill.room { border-color: #B9D4FF; background: #E8F2FF; color: #1B4F9B; }
+    .stats-actions .btn.pill.trip { border-color: #D9B8FF; background: #F3E8FF; color: #5B21B6; }
+    .stats-actions .btn.pill.settled { border-color: #BFE6D7; background: #E1F5EE; color: #0E5B49; }
+
+    .list-modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 150;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      backdrop-filter: blur(2px);
+    }
+    .list-modal-overlay.open { display: flex; }
+    .list-modal {
+      width: 100%;
+      max-width: 480px;
+      background: var(--c-surface);
+      border-radius: 16px;
+      border: 1px solid var(--c-border);
+      overflow: hidden;
+      box-shadow: var(--shadow-1);
+    }
+    .list-modal-header {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--c-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: linear-gradient(180deg, #FFFFFF, #F9FBFA);
+    }
+    .list-modal-title { font-size: 14px; font-weight: 700; color: var(--c-text); }
+    .list-modal-body {
+      padding: 12px 14px;
+      max-height: 70vh;
+      overflow: auto;
+    }
+    .name-list { display: flex; flex-direction: column; gap: 8px; }
+    .name-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--c-border);
+      background: var(--c-bg);
+    }
+    .name-row .left { min-width: 0; }
+    .name-row .n { font-size: 13px; font-weight: 700; color: var(--c-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .name-row .s { font-size: 11px; color: var(--c-muted); margin-top: 2px; }
+
 
     .member-list { display: flex; flex-direction: column; gap: 8px; }
 
@@ -595,6 +674,7 @@
       margin-top: 4px;
       display: inline-block;
     }
+    /* slip actions removed */
 
     @media (min-width: 600px) {
       .app { padding: 1.5rem; }
@@ -632,10 +712,25 @@
         <div class="label">รอยืนยัน</div>
         <div class="value" id="stat-pending">31</div>
       </div>
-      <div class="stat-card paid">
-        <div class="label">จ่ายแล้ว</div>
-        <div class="value" id="stat-paid">0</div>
+      <div class="stat-card paid paid-room">
+        <div class="label">จ่ายค่าห้องแล้ว</div>
+        <div class="value" id="stat-room-paid">0</div>
       </div>
+      <div class="stat-card paid paid-trip">
+        <div class="label">จ่ายค่าเที่ยวแล้ว</div>
+        <div class="value" id="stat-trip-paid">0</div>
+      </div>
+      <div class="stat-card paid paid-settled">
+        <div class="label">เคลียร์ครบแล้ว</div>
+        <div class="value" id="stat-settled">0</div>
+      </div>
+    </div>
+
+    <div class="stats-actions">
+      <button class="btn pill room" onclick="openPaidList('room')">ดูรายชื่อจ่ายค่าห้องแล้ว</button>
+      <button class="btn pill trip" onclick="openPaidList('trip')">ดูรายชื่อจ่ายค่าเที่ยวแล้ว</button>
+      <button class="btn pill settled" onclick="openPaidList('settled')">ดูรายชื่อเคลียร์ครบแล้ว</button>
+      
     </div>
 
     <div class="search-bar">
@@ -652,6 +747,19 @@
     </div>
 
     <div class="member-list" id="member-list"></div>
+  </div>
+
+  <!-- Paid list modal -->
+  <div class="list-modal-overlay" id="list-modal-overlay" onclick="closePaidListOutside(event)">
+    <div class="list-modal">
+      <div class="list-modal-header">
+        <div class="list-modal-title" id="list-modal-title">รายชื่อ</div>
+        <button class="btn" style="flex:0 0 auto; padding:8px 10px; font-size:12px;" onclick="closePaidList()">ปิด</button>
+      </div>
+      <div class="list-modal-body">
+        <div class="name-list" id="paid-name-list"></div>
+      </div>
+    </div>
   </div>
 
   <!-- Modal -->
@@ -835,6 +943,69 @@
   let currentReason = "";
   let currentPayType = null; // 'room' | 'trip' | 'both'
   let currentPayDue = 0;
+  function escapeCsvCell(value) {
+    const s = (value ?? '').toString();
+    const needsQuotes = /[",\n]/.test(s);
+    const escaped = s.replace(/"/g, '""');
+    return needsQuotes ? `"${escaped}"` : escaped;
+  }
+
+  function downloadTextFile(filename, content, mime) {
+    const blob = new Blob([content], { type: mime || 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function downloadAllSlipsReport() {
+    const rows = [];
+    rows.push([
+      'member_id',
+      'name',
+      'choice',
+      'room_paid',
+      'trip_paid',
+      'room_due',
+      'trip_due',
+      'slip_url',
+      'updated_at'
+    ]);
+
+    MEMBERS.forEach(m => {
+      const s = state[m.id] || null;
+      const choice = s?.choice || '';
+      const roomPaid = !!s?.room_paid;
+      const tripPaid = !!s?.trip_paid;
+      const roomDue = s?.choice ? calcRoomDue(m.base, roomPaid) : m.base;
+      const tripDue = s?.choice ? calcTripDue(choice, tripPaid) : 0;
+      const slipUrl = s?.slip_url || '';
+      const updatedAt = s?.ts || s?.updated_at || '';
+      rows.push([
+        m.id,
+        m.name,
+        choice,
+        roomPaid ? 'true' : 'false',
+        tripPaid ? 'true' : 'false',
+        roomDue,
+        tripDue,
+        slipUrl,
+        updatedAt
+      ]);
+    });
+
+    const csv = rows.map(r => r.map(escapeCsvCell).join(',')).join('\n');
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const fname = `slips_report_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.csv`;
+    downloadTextFile(fname, csv, 'text/csv;charset=utf-8');
+  }
+
+  // slip download removed
 
   function isSupabaseReady() {
     return SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase;
@@ -933,6 +1104,7 @@
     try { localStorage.setItem('trip_state_2025', JSON.stringify(state)); } catch(e) {}
   }
 
+
   function getInitials(name) {
     const parts = name.trim().split(' ');
     if (parts.length >= 2) return parts[0][0] + parts[1][0];
@@ -1007,7 +1179,8 @@
     const q = document.getElementById('search').value.toLowerCase();
     const list = document.getElementById('member-list');
 
-    let goCount = 0, noCount = 0, hostCount = 0, pendingCount = 0, paidCount = 0;
+    let goCount = 0, noCount = 0, hostCount = 0, pendingCount = 0;
+    let roomPaidCount = 0, tripPaidCount = 0, settledCount = 0;
     MEMBERS.forEach(m => {
       const s = state[m.id];
       if (!s) pendingCount++;
@@ -1015,7 +1188,9 @@
         if (s.choice === 'go') goCount++;
         else if (s.choice === 'no') noCount++;
         else if (s.choice === 'host') hostCount++;
-        if (isSettled(m.id, m.base)) paidCount++;
+        if (s.room_paid) roomPaidCount++;
+        if (s.choice === 'go' && s.trip_paid) tripPaidCount++;
+        if (isSettled(m.id, m.base)) settledCount++;
       }
     });
 
@@ -1023,14 +1198,27 @@
     document.getElementById('stat-no').textContent = noCount;
     document.getElementById('stat-host').textContent = hostCount;
     document.getElementById('stat-pending').textContent = pendingCount;
-    document.getElementById('stat-paid').textContent = paidCount;
+    document.getElementById('stat-room-paid').textContent = roomPaidCount;
+    document.getElementById('stat-trip-paid').textContent = tripPaidCount;
+    document.getElementById('stat-settled').textContent = settledCount;
 
     document.getElementById('tab-all').textContent = `ทั้งหมด (${MEMBERS.length})`;
     document.getElementById('tab-pending').textContent = `รอยืนยัน (${pendingCount})`;
     document.getElementById('tab-go').textContent = `ไปเที่ยว (${goCount})`;
     document.getElementById('tab-no').textContent = `ไม่ไป (${noCount})`;
     document.getElementById('tab-host').textContent = `เจ้าบ้าน (${hostCount})`;
-    document.getElementById('tab-paid').textContent = `จ่ายแล้ว (${paidCount})`;
+    document.getElementById('tab-paid').textContent = `จ่ายแล้ว (${settledCount})`;
+
+    // อัปเดตข้อความปุ่มดูรายชื่อให้เห็นจำนวน
+    const actions = document.querySelector('.stats-actions');
+    if (actions) {
+      const btns = actions.querySelectorAll('button.btn.pill');
+      btns.forEach(b => {
+        if (b.classList.contains('room')) b.textContent = `ดูรายชื่อจ่ายค่าห้องแล้ว (${roomPaidCount})`;
+        else if (b.classList.contains('trip')) b.textContent = `ดูรายชื่อจ่ายค่าเที่ยวแล้ว (${tripPaidCount})`;
+        else if (b.classList.contains('settled')) b.textContent = `ดูรายชื่อเคลียร์ครบแล้ว (${settledCount})`;
+      });
+    }
 
     const filtered = MEMBERS.filter(m => {
       if (q && !m.name.toLowerCase().includes(q)) return false;
@@ -1081,6 +1269,59 @@
         </div>
       </div>`;
     }).join('');
+  }
+
+  function openPaidList(type) {
+    // type: 'room' | 'trip' | 'settled'
+    const titleEl = document.getElementById('list-modal-title');
+    const listEl = document.getElementById('paid-name-list');
+    if (!titleEl || !listEl) return;
+
+    const title =
+      type === 'room' ? 'รายชื่อ: จ่ายค่าห้องแล้ว' :
+      type === 'trip' ? 'รายชื่อ: จ่ายค่าเที่ยวแล้ว' :
+      'รายชื่อ: เคลียร์ครบแล้ว';
+    titleEl.textContent = title;
+
+    const rows = MEMBERS
+      .map(m => ({ m, s: state[m.id] || null }))
+      .filter(({ m, s }) => {
+        if (!s || !s.choice) return false;
+        if (type === 'room') return !!s.room_paid;
+        if (type === 'trip') return s.choice === 'go' && !!s.trip_paid;
+        return isSettled(m.id, m.base);
+      })
+      .map(({ m, s }) => {
+        const choiceLabel = s.choice === 'go' ? 'ไปเที่ยว' : s.choice === 'host' ? 'เจ้าบ้าน' : 'ไม่ไป';
+        const roomTxt = s.room_paid ? 'ค่าห้อง: ✅' : 'ค่าห้อง: ❌';
+        const tripFee = getTripFee(s.choice);
+        const tripTxt = tripFee > 0 ? (s.trip_paid ? 'ค่าเที่ยว: ✅' : 'ค่าเที่ยว: ❌') : 'ค่าเที่ยว: -';
+        const meta = `${choiceLabel} • ${roomTxt} • ${tripTxt}`;
+        return `
+          <div class="name-row" onclick="openModal(${m.id})">
+            <div class="left">
+              <div class="n">${m.id}. ${m.name}</div>
+              <div class="s">${meta}</div>
+            </div>
+            <div class="badge ${s.choice === 'go' ? 'go' : s.choice === 'host' ? 'host' : 'no'}">${choiceLabel}</div>
+          </div>
+        `;
+      });
+
+    listEl.innerHTML = rows.length
+      ? rows.join('')
+      : `<div class="note-text" style="margin:0;">ยังไม่มีรายชื่อในหมวดนี้</div>`;
+
+    document.getElementById('list-modal-overlay').classList.add('open');
+  }
+
+  function closePaidList() {
+    const el = document.getElementById('list-modal-overlay');
+    if (el) el.classList.remove('open');
+  }
+
+  function closePaidListOutside(e) {
+    if (e.target === document.getElementById('list-modal-overlay')) closePaidList();
   }
 
   function setFilter(f, el) {
@@ -1494,11 +1735,13 @@
       `${m.name} — ${choiceLabel}\n${dueTextParts.join(' • ')}\nไฟล์ถูกบันทึกแล้ว${reasonText}`;
 
     const doneSlip = document.getElementById('done-slip');
-    if (slipUrl) {
-      doneSlip.href = slipUrl;
-      doneSlip.style.display = 'inline-block';
-    } else {
-      doneSlip.style.display = 'none';
+    if (doneSlip) {
+      if (slipUrl) {
+        doneSlip.href = slipUrl;
+        doneSlip.style.display = 'inline-block';
+      } else {
+        doneSlip.style.display = 'none';
+      }
     }
 
     showView('done');
