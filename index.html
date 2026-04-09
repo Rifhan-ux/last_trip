@@ -88,6 +88,7 @@
     .stat-card.go .value { color: var(--c-primary); }
     .stat-card.no .value { color: var(--c-danger); }
     .stat-card.paid .value { color: #1B74E4; }
+    .stat-card.host .value { color: #7C3AED; }
 
     .search-bar {
       display: flex;
@@ -153,6 +154,7 @@
     }
     .avatar.go { background: var(--c-primary-light); color: var(--c-primary-dark); }
     .avatar.no { background: var(--c-danger-light); color: var(--c-danger); }
+    .avatar.host { background: #F3E8FF; color: #6D28D9; }
     .avatar.pending { background: var(--c-bg); color: var(--c-muted); }
 
     .member-info { flex: 1; min-width: 0; }
@@ -177,6 +179,7 @@
     .badge.no { background: var(--c-danger-light); color: var(--c-danger); }
     .badge.paid { background: #E8F2FF; color: #1B74E4; }
     .badge.success { background: var(--c-primary-light); color: var(--c-primary-dark); }
+    .badge.host { background: #F3E8FF; color: #6D28D9; }
     .badge.pending { background: var(--c-bg); color: var(--c-muted); }
 
     /* Modal overlay */
@@ -258,6 +261,7 @@
     .choice-btn .choice-sub { font-size: 11px; color: var(--c-muted); margin-top: 2px; }
     .choice-btn.go-btn:hover, .choice-btn.go-btn.selected { border-color: var(--c-primary); background: var(--c-primary-light); }
     .choice-btn.no-btn:hover, .choice-btn.no-btn.selected { border-color: var(--c-danger); background: var(--c-danger-light); }
+    .choice-btn.host-btn:hover, .choice-btn.host-btn.selected { border-color: #7C3AED; background: #F3E8FF; }
 
     .final-amount {
       text-align: center;
@@ -271,6 +275,7 @@
     .final-amount.show { display: block; }
     .final-amount.go { background: var(--c-primary-light); color: var(--c-primary-dark); }
     .final-amount.no { background: var(--c-danger-light); color: var(--c-danger); }
+    .final-amount.host { background: #F3E8FF; color: #6D28D9; }
 
     .note-text {
       font-size: 12px;
@@ -619,6 +624,10 @@
         <div class="label">ไม่ไป</div>
         <div class="value" id="stat-no">0</div>
       </div>
+      <div class="stat-card host">
+        <div class="label">เจ้าบ้าน</div>
+        <div class="value" id="stat-host">0</div>
+      </div>
       <div class="stat-card">
         <div class="label">รอยืนยัน</div>
         <div class="value" id="stat-pending">31</div>
@@ -638,6 +647,7 @@
       <div class="filter-tab" id="tab-pending" onclick="setFilter('pending', this)">รอยืนยัน</div>
       <div class="filter-tab" id="tab-go" onclick="setFilter('go', this)">ไปเที่ยว</div>
       <div class="filter-tab" id="tab-no" onclick="setFilter('no', this)">ไม่ไป</div>
+      <div class="filter-tab" id="tab-host" onclick="setFilter('host', this)">เจ้าบ้าน</div>
       <div class="filter-tab" id="tab-paid" onclick="setFilter('paid', this)">จ่ายแล้ว</div>
     </div>
 
@@ -677,6 +687,11 @@
             <div class="choice-btn no-btn" onclick="selectChoice('no')">
               <div class="icon">🏠</div>
               <div class="choice-label">ไม่ไป</div>
+              <div class="choice-sub">จ่ายเฉพาะค่าห้อง</div>
+            </div>
+            <div class="choice-btn host-btn" onclick="selectChoice('host')">
+              <div class="icon">🏡</div>
+              <div class="choice-label">เจ้าบ้าน</div>
               <div class="choice-sub">จ่ายเฉพาะค่าห้อง</div>
             </div>
           </div>
@@ -927,6 +942,7 @@
   function calcAmount(base, choice) {
     if (choice === 'go') return base + 1200;
     if (choice === 'no') return base;
+    if (choice === 'host') return base;
     return base;
   }
 
@@ -991,19 +1007,21 @@
     const q = document.getElementById('search').value.toLowerCase();
     const list = document.getElementById('member-list');
 
-    let goCount = 0, noCount = 0, pendingCount = 0, paidCount = 0;
+    let goCount = 0, noCount = 0, hostCount = 0, pendingCount = 0, paidCount = 0;
     MEMBERS.forEach(m => {
       const s = state[m.id];
       if (!s) pendingCount++;
       else {
         if (s.choice === 'go') goCount++;
         else if (s.choice === 'no') noCount++;
+        else if (s.choice === 'host') hostCount++;
         if (isSettled(m.id, m.base)) paidCount++;
       }
     });
 
     document.getElementById('stat-go').textContent = goCount;
     document.getElementById('stat-no').textContent = noCount;
+    document.getElementById('stat-host').textContent = hostCount;
     document.getElementById('stat-pending').textContent = pendingCount;
     document.getElementById('stat-paid').textContent = paidCount;
 
@@ -1011,6 +1029,7 @@
     document.getElementById('tab-pending').textContent = `รอยืนยัน (${pendingCount})`;
     document.getElementById('tab-go').textContent = `ไปเที่ยว (${goCount})`;
     document.getElementById('tab-no').textContent = `ไม่ไป (${noCount})`;
+    document.getElementById('tab-host').textContent = `เจ้าบ้าน (${hostCount})`;
     document.getElementById('tab-paid').textContent = `จ่ายแล้ว (${paidCount})`;
 
     const filtered = MEMBERS.filter(m => {
@@ -1019,6 +1038,7 @@
       if (currentFilter === 'pending') return !s;
       if (currentFilter === 'go') return s && s.choice === 'go';
       if (currentFilter === 'no') return s && s.choice === 'no';
+      if (currentFilter === 'host') return s && s.choice === 'host';
       if (currentFilter === 'paid') return isSettled(m.id, m.base);
       return true;
     });
@@ -1032,7 +1052,7 @@
       const tripDue = choice ? calcTripDue(choice, tripPaid) : 0;
       const settled = choice ? (roomDue === 0 && tripDue === 0) : false;
 
-      const avatarClass = choice === 'go' ? 'go' : choice === 'no' ? 'no' : 'pending';
+      const avatarClass = choice === 'go' ? 'go' : choice === 'no' ? 'no' : choice === 'host' ? 'host' : 'pending';
       const amountClass = roomDue === 0 ? 'amount-go' : 'amount-pending';
       const cardClass = settled ? 'success' : 'unpaid';
 
@@ -1042,6 +1062,7 @@
       else if (choice === 'go' && roomPaid && !tripPaid) badgeHtml = '<span class="badge paid">จ่ายค่าห้องแล้ว</span>';
       else if (choice === 'go' && !roomPaid && tripPaid) badgeHtml = '<span class="badge paid">จ่ายค่าเที่ยวแล้ว</span>';
       else if (choice === 'go') badgeHtml = '<span class="badge go">ไปเที่ยว</span>';
+      else if (choice === 'host') badgeHtml = '<span class="badge host">เจ้าบ้าน</span>';
       else if (choice === 'no' && roomPaid) badgeHtml = '<span class="badge success">จ่ายค่าห้องแล้ว</span>';
       else if (choice === 'no') badgeHtml = '<span class="badge no">ไม่ไป</span>';
 
@@ -1085,8 +1106,8 @@
     document.getElementById('modal-num').textContent = `ลำดับที่ ${m.id} — ค่าห้อง ณ 31/3/69`;
     document.getElementById('modal-base').textContent = m.base.toLocaleString() + ' บาท';
 
-    document.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
-    document.getElementById('final-amount').classList.remove('show', 'go', 'no');
+    document.querySelectorAll('.choice-btn.go-btn, .choice-btn.no-btn, .choice-btn.host-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('final-amount').classList.remove('show', 'go', 'no', 'host');
     document.getElementById('btn-next').disabled = true;
     document.getElementById('btn-save').disabled = true;
 
@@ -1111,9 +1132,6 @@
     const reasonInput = document.getElementById('reason-input');
     if (reasonInput) reasonInput.value = currentReason || "";
     setReasonBoxVisible(currentChoice === 'no');
-
-    const funPreview = document.getElementById('fun-preview');
-    if (funPreview) funPreview.classList.remove('show');
 
     document.getElementById('modal-overlay').classList.add('open');
   }
@@ -1150,7 +1168,7 @@
 
   function selectChoice(c) {
     currentChoice = c;
-    document.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('.choice-btn.go-btn, .choice-btn.no-btn, .choice-btn.host-btn').forEach(b => b.classList.remove('selected'));
     document.querySelector('.' + c + '-btn').classList.add('selected');
     updateFinalAmount();
     document.getElementById('btn-next').disabled = false;
@@ -1218,14 +1236,18 @@
     if (!currentMember || !currentChoice) return;
     const amt = calcAmount(currentMember.base, currentChoice);
     const el = document.getElementById('final-amount');
-    el.textContent = (currentChoice === 'go' ? '💰 ต้องจ่าย: ' : '💵 จ่ายเฉพาะค่าห้อง: ') + amt.toLocaleString() + ' บาท';
+    const prefix =
+      currentChoice === 'go' ? '💰 ต้องจ่าย: ' :
+      currentChoice === 'host' ? '🏡 เจ้าบ้านจ่ายเฉพาะค่าห้อง: ' :
+      '💵 จ่ายเฉพาะค่าห้อง: ';
+    el.textContent = prefix + amt.toLocaleString() + ' บาท';
     el.className = 'final-amount show ' + currentChoice;
   }
 
   function goToPayment() {
     if (!currentChoice || !currentMember) return;
     const amt = calcAmount(currentMember.base, currentChoice);
-    const choiceLabel = currentChoice === 'go' ? 'ไป' : 'ไม่ไป';
+    const choiceLabel = currentChoice === 'go' ? 'ไป' : currentChoice === 'host' ? 'เจ้าบ้าน' : 'ไม่ไป';
     const safeName = currentMember.name.replace(/\s+/g, '');
     const fileName = `${safeName}_${choiceLabel}_${amt}`;
     document.getElementById('file-name-preview').textContent = fileName + '.jpg';
@@ -1288,10 +1310,10 @@
       dueSummary.textContent = parts.join(' • ');
     }
 
-    // ซ่อนตัวเลือก "จ่ายค่าเที่ยว" ถ้าไม่ได้ไปเที่ยว
+    // ซ่อนตัวเลือก "จ่ายค่าเที่ยว" ถ้าไม่มีค่าเที่ยว (ไม่ไป/เจ้าบ้าน)
     const tripBtn = document.getElementById('paytype-trip');
     const bothBtn = document.getElementById('paytype-both');
-    if (currentChoice !== 'go') {
+    if (getTripFee(currentChoice) === 0) {
       if (tripBtn) tripBtn.style.display = 'none';
       if (bothBtn) bothBtn.style.display = 'none';
     } else {
@@ -1324,7 +1346,7 @@
       const qrLabel = document.getElementById('qr-amount-label');
       if (qrLabel) qrLabel.textContent = `ยอดที่ควรโอน: ${currentPayDue.toLocaleString()} บาท`;
 
-      const choiceLabel = currentChoice === 'go' ? 'ไป' : 'ไม่ไป';
+      const choiceLabel = currentChoice === 'go' ? 'ไป' : currentChoice === 'host' ? 'เจ้าบ้าน' : 'ไม่ไป';
       const safeName = currentMember.name.replace(/\s+/g, '');
       const typeLabel = t === 'room' ? 'ห้อง' : t === 'trip' ? 'เที่ยว' : 'รวม';
       document.getElementById('file-name-preview').textContent = `${safeName}_${choiceLabel}_${typeLabel}_${currentPayDue}.jpg`;
@@ -1459,7 +1481,7 @@
 
   function showDoneView(m, choice, slipUrl) {
     const amt = calcAmount(m.base, choice);
-    const choiceLabel = choice === 'go' ? 'ไปเที่ยว' : 'ไม่ไป';
+    const choiceLabel = choice === 'go' ? 'ไปเที่ยว' : choice === 'host' ? 'เจ้าบ้าน' : 'ไม่ไป';
     const s = state[m.id] || {};
     const parsed = parseReasonField(s.reason || "");
     const reasonText = choice === 'no' && (currentReason || parsed.reasonText) ? `\nเหตุผล: ${(currentReason || parsed.reasonText).trim()}` : '';
